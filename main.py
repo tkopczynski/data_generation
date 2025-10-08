@@ -2,7 +2,6 @@
 
 import click
 from dotenv import load_dotenv
-from langchain_core.runnables import RunnableLambda
 from tools.schema_inference import infer_schema_tool
 from tools.generator import generate_data_tool
 from logging_config import setup_logging
@@ -24,12 +23,8 @@ def create_generation_chain():
             "output_file": input_dict["output_file"]
         }
 
-    def generate_data(input_dict):
-        """Wrapper to call generate_data_tool."""
-        return generate_data_tool.invoke(input_dict)
-
     # Create LCEL chain using | operator
-    chain = RunnableLambda(infer_schema) | RunnableLambda(generate_data)
+    chain = infer_schema | generate_data_tool
 
     return chain
 
