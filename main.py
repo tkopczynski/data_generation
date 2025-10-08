@@ -2,9 +2,10 @@
 
 import click
 from dotenv import load_dotenv
-from tools.schema_inference import infer_schema_tool
-from tools.generator import generate_data_tool
+
 from logging_config import setup_logging
+from tools.generator import generate_data_tool
+from tools.schema_inference import infer_schema_tool
 
 load_dotenv()
 setup_logging()
@@ -66,7 +67,7 @@ def main(description, rows, output):
         "output_file": output_file
     })
 
-    click.echo(f"\n✓ Data generated successfully!")
+    click.echo("\n✓ Data generated successfully!")
     click.echo(f"Saved to: {file_path}")
 
 

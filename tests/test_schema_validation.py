@@ -1,7 +1,8 @@
 """Tests for schema validation."""
 
 import pytest
-from tools.schema_validation import validate_schema, SchemaValidationError
+
+from tools.schema_validation import SchemaValidationError, validate_schema
 
 
 class TestValidateSchema:

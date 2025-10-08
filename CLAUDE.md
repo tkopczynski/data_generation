@@ -15,7 +15,7 @@ A CLI application for generating synthetic sales datasets using LangChain and Op
 
 2. **Install dependencies:**
    ```bash
-   uv pip install -e .
+   uv pip install -e ".[dev]"
    ```
    Dependencies are managed in `pyproject.toml` - always use this file for dependency management.
 
@@ -30,4 +30,21 @@ A CLI application for generating synthetic sales datasets using LangChain and Op
 - Python >= 3.12 required
 - The application expects LLM output in pipe-separated format with headers
 - Output file location controlled by `OUTPUT_FILE` in `config.py`
-- No test suite currently exists
+- Tests can be run with `pytest`
+
+## Code Quality
+
+Ruff is used for linting and formatting:
+
+```bash
+# Check for issues
+ruff check .
+
+# Auto-fix issues
+ruff check --fix .
+
+# Format code
+ruff format .
+```
+
+Configuration is in `pyproject.toml` under `[tool.ruff]`

@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "data-generation"
 version = "0.1.0"
@@ -15,7 +19,33 @@ dependencies = [
     "pyyaml>=6.0.0",
 ]
 
+[tool.setuptools]
+py-modules = ["main", "config", "logging_config"]
+
+[tool.setuptools.packages.find]
+include = ["tools*", "tests*"]
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
+    "ruff>=0.8.0",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["tools", "config", "logging_config"]

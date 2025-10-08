@@ -1,6 +1,6 @@
 """Schema validation utilities."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 
 class SchemaValidationError(Exception):
@@ -8,7 +8,7 @@ class SchemaValidationError(Exception):
     pass
 
 
-def validate_schema(schema: List[Dict[str, Any]]) -> None:
+def validate_schema(schema: list[dict[str, Any]]) -> None:
     """
     Validate the schema configuration.
 
