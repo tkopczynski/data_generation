@@ -6,7 +6,7 @@ from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 
 from data_generation import config
-from data_generation.core.generator import generate_data_tool
+from data_generation.tools.data_generation import generate_data_tool
 from data_generation.tools.schema_inference import infer_schema_tool
 
 logger = logging.getLogger(__name__)
