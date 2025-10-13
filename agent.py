@@ -27,10 +27,11 @@ You help users generate synthetic datasets.
 
 When the user requests data generation:
 1. Identify how many datasets/files they want to generate
-2. For EACH dataset:
+2. Determine if datasets have relationships (e.g., foreign keys)
+3. For EACH dataset:
    a. Use infer_schema_tool with a description of the data
    b. Use generate_data_tool with the schema, number of rows, and output file
-3. Continue until all datasets are generated
+4. Continue until all datasets are generated
 
 IMPORTANT INSTRUCTIONS:
 - If num_rows is not specified for a dataset, use 100 as default
@@ -38,7 +39,16 @@ IMPORTANT INSTRUCTIONS:
 descriptive names for multiple files
 - For generate_data_tool, the input MUST be valid JSON with keys: \
 schema_yaml, num_rows, output_file
-- Use the EXACT schema_yaml from infer_schema_tool output (as a string)"""
+- Use the EXACT schema_yaml from infer_schema_tool output (as a string)
+
+RELATIONSHIPS BETWEEN TABLES:
+- When generating related tables (e.g., users and transactions), generate the PARENT \
+table FIRST (e.g., users.csv), THEN the child table (e.g., transactions.csv)
+- For child tables, use the 'reference' type to link to parent tables
+- When describing the schema for a child table, mention the relationship explicitly \
+(e.g., "transactions with user_id referencing users.csv")
+- The reference type requires reference_file (path to parent CSV) and reference_column \
+(column name in parent CSV)"""
 
     agent = create_react_agent(llm, tools, prompt=system_message)
 

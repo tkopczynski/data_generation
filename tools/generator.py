@@ -1,5 +1,6 @@
 """Non-AI data generation tools."""
 
+import logging
 import random
 import uuid
 from datetime import datetime, timedelta
@@ -13,6 +14,8 @@ from langchain_core.tools import tool
 
 from tools.schema_validation import SchemaValidationError, validate_schema
 
+logger = logging.getLogger(__name__)
+
 
 def generate_data(schema: list[dict[str, Any]], num_rows: int) -> list[dict[str, Any]]:
     """
@@ -25,7 +28,7 @@ def generate_data(schema: list[dict[str, Any]], num_rows: int) -> list[dict[str,
                    {
                        "name": "column_name",
                        "type": "int|float|date|datetime|category|text|email|phone|name|address|
-                                company|product|uuid|bool|currency|percentage",
+                                company|product|uuid|bool|currency|percentage|reference",
                        "config": {
                            "min": value (for int/float/currency/percentage),
                            "max": value (for int/float/currency/percentage),
@@ -34,7 +37,9 @@ def generate_data(schema: list[dict[str, Any]], num_rows: int) -> list[dict[str,
                            "start_date": date (for date/datetime),
                            "end_date": date (for date/datetime),
                            "text_type": "first_name|last_name|full_name|street|city|state|
-                                         zip|country" (for name/address)
+                                         zip|country" (for name/address),
+                           "reference_file": path (for reference),
+                           "reference_column": column_name (for reference)
                        }
                    }
                ]
@@ -51,19 +56,27 @@ def generate_data(schema: list[dict[str, Any]], num_rows: int) -> list[dict[str,
     fake = Faker()
     data = []
 
+    # Cache for loaded reference data
+    reference_cache: dict[str, list[Any]] = {}
+
     for _ in range(num_rows):
         row = {}
         for column_config in schema:
             column_name = column_config["name"]
             column_type = column_config["type"]
             config = column_config.get("config", {})
-            row[column_name] = _generate_value(fake, column_type, config)
+            row[column_name] = _generate_value(fake, column_type, config, reference_cache)
         data.append(row)
 
     return data
 
 
-def _generate_value(fake: Faker, field_type: str, config: dict[str, Any]) -> Any:
+def _generate_value(
+    fake: Faker,
+    field_type: str,
+    config: dict[str, Any],
+    reference_cache: dict[str, list[Any]] | None = None,
+) -> Any:
     """
     Generate a single value based on the field type and configuration.
 
@@ -71,10 +84,13 @@ def _generate_value(fake: Faker, field_type: str, config: dict[str, Any]) -> Any
         fake: Faker instance
         field_type: The type of field to generate
         config: Configuration dictionary for the field
+        reference_cache: Cache for loaded reference data (for reference type)
 
     Returns:
         Generated value
     """
+    if reference_cache is None:
+        reference_cache = {}
     # Numeric types
     if field_type == "int":
         min_val = config.get("min", 0)
@@ -171,6 +187,47 @@ def _generate_value(fake: Faker, field_type: str, config: dict[str, Any]) -> Any
     elif field_type == "text":
         return fake.text(max_nb_chars=200)
 
+    elif field_type == "reference":
+        # Load reference data from file
+        reference_file = config.get("reference_file")
+        reference_column = config.get("reference_column")
+
+        if not reference_file:
+            raise ValueError("reference type requires 'reference_file' in config")
+        if not reference_column:
+            raise ValueError("reference type requires 'reference_column' in config")
+
+        # Use cache key to avoid reloading the same file
+        cache_key = f"{reference_file}:{reference_column}"
+
+        if cache_key not in reference_cache:
+            # Load the reference file
+            ref_path = Path(reference_file)
+            if not ref_path.exists():
+                raise FileNotFoundError(f"Reference file not found: {reference_file}")
+
+            # Load CSV and extract the reference column
+            logger.info(
+                f"Loading reference data from '{reference_file}', column '{reference_column}'"
+            )
+            ref_df = pd.read_csv(ref_path)
+
+            if reference_column not in ref_df.columns:
+                raise ValueError(
+                    f"Column '{reference_column}' not found in {reference_file}. "
+                    f"Available columns: {', '.join(ref_df.columns)}"
+                )
+
+            # Store the values in cache
+            reference_cache[cache_key] = ref_df[reference_column].tolist()
+            logger.debug(
+                f"Cached {len(reference_cache[cache_key])} values from {reference_file}"
+            )
+
+        # Randomly select a value from the reference data
+        reference_values = reference_cache[cache_key]
+        return random.choice(reference_values)
+
     else:
         # Default fallback
         return fake.word()
@@ -187,7 +244,7 @@ def generate_data_tool(
         schema_yaml: YAML string defining the data structure. Format:
             - name: column_name
               type: int|float|date|datetime|category|text|email|phone|name|address|
-                    company|product|uuid|bool|currency|percentage
+                    company|product|uuid|bool|currency|percentage|reference
               config:
                 min: value (for int/float/currency/percentage)
                 max: value (for int/float/currency/percentage)
@@ -197,17 +254,23 @@ def generate_data_tool(
                 end_date: "YYYY-MM-DD" (for date/datetime)
                 text_type: first_name|last_name|full_name|street|city|state|zip|country
                            (for name/address)
+                reference_file: path/to/file.csv (for reference - REQUIRED)
+                reference_column: column_name (for reference - REQUIRED)
         num_rows: Number of rows to generate
         output_file: Path to save the CSV file (default: generated_data.csv)
 
     Returns:
         Path to the generated CSV file
     """
+    logger.info(f"generate_data_tool called: output_file='{output_file}', num_rows={num_rows}")
+
     try:
         # Parse YAML schema
         schema = yaml.safe_load(schema_yaml)
+        logger.debug(f"Parsed schema with {len(schema)} columns")
 
         # Generate data
+        logger.info(f"Generating {num_rows} rows of data...")
         data = generate_data(schema, num_rows)
 
         # Convert to DataFrame
@@ -217,6 +280,7 @@ def generate_data_tool(
         output_path = Path(output_file)
         df.to_csv(output_path, index=False)
 
+        logger.info(f"Successfully generated {num_rows} rows and saved to {output_path.absolute()}")
         return str(output_path.absolute())
 
     except yaml.YAMLError as e:

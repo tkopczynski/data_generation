@@ -27,7 +27,7 @@ def validate_schema(schema: list[dict[str, Any]]) -> None:
     valid_types = {
         "int", "float", "date", "datetime", "category", "text", "email",
         "phone", "name", "address", "company", "product", "uuid", "bool",
-        "currency", "percentage"
+        "currency", "percentage", "reference"
     }
 
     valid_text_types = {
@@ -94,3 +94,15 @@ def validate_schema(schema: list[dict[str, Any]]) -> None:
                         f"Column '{column_name}' has invalid text_type '{text_type}'. "
                         f"Valid text_types: {', '.join(sorted(valid_text_types))}"
                     )
+
+        if column_type == "reference":
+            if "reference_file" not in config:
+                raise SchemaValidationError(
+                    f"Column '{column_name}' with type 'reference' must have "
+                    "'reference_file' in config"
+                )
+            if "reference_column" not in config:
+                raise SchemaValidationError(
+                    f"Column '{column_name}' with type 'reference' must have "
+                    "'reference_column' in config"
+                )

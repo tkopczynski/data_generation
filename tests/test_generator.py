@@ -216,3 +216,96 @@ class TestGenerateData:
         schema = [{"name": "id"}]  # Missing type
         with pytest.raises(SchemaValidationError):
             generate_data(schema, 10)
+
+    def test_reference_type_basic(self, tmp_path):
+        """Test reference type with a simple parent table."""
+        # Create a parent CSV file
+        parent_file = tmp_path / "users.csv"
+        parent_file.write_text("user_id,name\n1,Alice\n2,Bob\n3,Charlie\n")
+
+        # Create schema that references the parent file
+        schema = [
+            {"name": "transaction_id", "type": "uuid"},
+            {
+                "name": "user_id",
+                "type": "reference",
+                "config": {"reference_file": str(parent_file), "reference_column": "user_id"},
+            },
+            {"name": "amount", "type": "currency"},
+        ]
+
+        data = generate_data(schema, 20)
+
+        assert len(data) == 20
+        # All user_ids should be from the parent table
+        valid_user_ids = ["1", "2", "3"]  # CSV reads as strings
+        assert all(str(row["user_id"]) in valid_user_ids for row in data)
+
+    def test_reference_type_missing_file(self):
+        """Test reference type with missing file raises error."""
+        schema = [
+            {
+                "name": "user_id",
+                "type": "reference",
+                "config": {
+                    "reference_file": "nonexistent.csv",
+                    "reference_column": "user_id",
+                },
+            }
+        ]
+
+        with pytest.raises(FileNotFoundError):
+            generate_data(schema, 10)
+
+    def test_reference_type_missing_column(self, tmp_path):
+        """Test reference type with missing column raises error."""
+        parent_file = tmp_path / "users.csv"
+        parent_file.write_text("user_id,name\n1,Alice\n")
+
+        schema = [
+            {
+                "name": "user_id",
+                "type": "reference",
+                "config": {
+                    "reference_file": str(parent_file),
+                    "reference_column": "nonexistent_column",
+                },
+            }
+        ]
+
+        with pytest.raises(ValueError, match="Column 'nonexistent_column' not found"):
+            generate_data(schema, 10)
+
+    def test_reference_type_missing_config(self):
+        """Test reference type without required config raises validation error."""
+        schema = [{"name": "user_id", "type": "reference", "config": {}}]
+
+        with pytest.raises(SchemaValidationError, match="reference_file"):
+            generate_data(schema, 10)
+
+    def test_reference_type_caching(self, tmp_path):
+        """Test that reference data is cached and not reloaded."""
+        parent_file = tmp_path / "categories.csv"
+        parent_file.write_text("category_id,name\nA,Alpha\nB,Beta\nC,Gamma\n")
+
+        # Create schema with multiple reference columns using the same file
+        schema = [
+            {"name": "id", "type": "uuid"},
+            {
+                "name": "primary_category",
+                "type": "reference",
+                "config": {"reference_file": str(parent_file), "reference_column": "category_id"},
+            },
+            {
+                "name": "secondary_category",
+                "type": "reference",
+                "config": {"reference_file": str(parent_file), "reference_column": "category_id"},
+            },
+        ]
+
+        data = generate_data(schema, 30)
+
+        assert len(data) == 30
+        valid_categories = ["A", "B", "C"]
+        assert all(str(row["primary_category"]) in valid_categories for row in data)
+        assert all(str(row["secondary_category"]) in valid_categories for row in data)

@@ -21,7 +21,7 @@ Description: {description}
 The schema should be in YAML format with the following structure:
 - name: column_name
   type: one of (int, float, date, datetime, category, text, email, phone, name, address,
-                company, product, uuid, bool, currency, percentage)
+                company, product, uuid, bool, currency, percentage, reference)
   config:
     # Optional configuration based on type
     min: value (for int/float/currency/percentage)
@@ -32,9 +32,15 @@ The schema should be in YAML format with the following structure:
     end_date: "YYYY-MM-DD" (for date/datetime)
     text_type: first_name|last_name|full_name|street|city|state|zip|country
                (for name/address)
+    reference_file: file.csv (for reference - REQUIRED)
+    reference_column: column_name (for reference - REQUIRED)
 
-IMPORTANT: Return ONLY the raw YAML schema. Do not include markdown code blocks,
-backticks, or any formatting. Do not add any explanation before or after the YAML."""
+IMPORTANT NOTES:
+- Use the 'reference' type when you need to create relationships between tables
+  (e.g., user_id in transactions referencing user_id in users.csv)
+- For reference type, you MUST specify both reference_file and reference_column
+- Return ONLY the raw YAML schema. Do not include markdown code blocks,
+  backticks, or any formatting. Do not add any explanation before or after the YAML."""
 )
 
 
