@@ -2,15 +2,12 @@
 
 import click
 from dotenv import load_dotenv
-from langchain.globals import set_verbose
 
 from agent import run_agent
 from logging_config import setup_logging
 
 load_dotenv()
 setup_logging()
-
-set_verbose(True)
 
 
 @click.command()
