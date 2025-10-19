@@ -10,6 +10,7 @@ from typing import Any
 import pandas as pd
 from faker import Faker
 
+from data_generation.core.quality import QualityConfig, apply_quality_config
 from data_generation.tools.schema_validation import validate_schema
 
 logger = logging.getLogger(__name__)
@@ -37,7 +38,14 @@ def generate_data(schema: list[dict[str, Any]], num_rows: int) -> list[dict[str,
                            "text_type": "first_name|last_name|full_name|street|city|state|
                                          zip|country" (for name/address),
                            "reference_file": path (for reference),
-                           "reference_column": column_name (for reference)
+                           "reference_column": column_name (for reference),
+                           "quality_config": {
+                               "null_rate": 0.0-1.0,
+                               "duplicate_rate": 0.0-1.0,
+                               "similar_rate": 0.0-1.0,
+                               "outlier_rate": 0.0-1.0,
+                               "invalid_format_rate": 0.0-1.0
+                           }
                        }
                    }
                ]
@@ -57,13 +65,35 @@ def generate_data(schema: list[dict[str, Any]], num_rows: int) -> list[dict[str,
     # Cache for loaded reference data
     reference_cache: dict[str, list[Any]] = {}
 
+    # Track previous values per column for duplicate injection
+    previous_values: dict[str, list[Any]] = {field["name"]: [] for field in schema}
+
     for _ in range(num_rows):
         row = {}
         for column_config in schema:
             column_name = column_config["name"]
             column_type = column_config["type"]
             config = column_config.get("config", {})
-            row[column_name] = _generate_value(fake, column_type, config, reference_cache)
+
+            # Parse quality config if present
+            quality_config = None
+            if "quality_config" in config:
+                quality_config = QualityConfig(**config["quality_config"])
+
+            # Generate base value
+            value = _generate_value(fake, column_type, config, reference_cache)
+
+            # Apply quality degradation
+            value = apply_quality_config(
+                value, column_type, quality_config, previous_values[column_name]
+            )
+
+            # Track for duplicates (only track non-null values)
+            if value is not None:
+                previous_values[column_name].append(value)
+
+            row[column_name] = value
+
         data.append(row)
 
     return data

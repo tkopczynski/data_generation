@@ -106,3 +106,43 @@ def validate_schema(schema: list[dict[str, Any]]) -> None:
                     f"Column '{column_name}' with type 'reference' must have "
                     "'reference_column' in config"
                 )
+
+        # Validate quality_config if present
+        if "quality_config" in config:
+            validate_quality_config(column_name, config["quality_config"])
+
+
+def validate_quality_config(column_name: str, quality_config: Any) -> None:
+    """
+    Validate quality configuration.
+
+    Args:
+        column_name: Name of the column (for error messages)
+        quality_config: Quality configuration dictionary to validate
+
+    Raises:
+        SchemaValidationError: If quality_config is invalid
+    """
+    if not isinstance(quality_config, dict):
+        raise SchemaValidationError(
+            f"Column '{column_name}': quality_config must be a dictionary"
+        )
+
+    valid_keys = {"null_rate", "duplicate_rate", "similar_rate", "outlier_rate", "invalid_format_rate"}
+
+    for key, value in quality_config.items():
+        if key not in valid_keys:
+            raise SchemaValidationError(
+                f"Column '{column_name}': invalid quality_config key '{key}'. "
+                f"Valid keys: {', '.join(sorted(valid_keys))}"
+            )
+
+        if not isinstance(value, (int, float)):
+            raise SchemaValidationError(
+                f"Column '{column_name}': quality_config '{key}' must be a number, got {type(value).__name__}"
+            )
+
+        if not 0 <= value <= 1:
+            raise SchemaValidationError(
+                f"Column '{column_name}': quality_config '{key}' must be between 0 and 1, got {value}"
+            )
