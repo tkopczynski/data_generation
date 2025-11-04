@@ -11,6 +11,7 @@ import pandas as pd
 from faker import Faker
 
 from data_generation.core.quality import QualityConfig, apply_quality_config
+from data_generation.core.target_generation import generate_target_value
 from data_generation.tools.schema_validation import validate_schema
 
 logger = logging.getLogger(__name__)
@@ -68,9 +69,21 @@ def generate_data(schema: list[dict[str, Any]], num_rows: int) -> list[dict[str,
     # Track previous values per column for duplicate injection
     previous_values: dict[str, list[Any]] = {field["name"]: [] for field in schema}
 
+    # Separate feature columns from target columns
+    feature_columns = []
+    target_columns = []
+
+    for column_config in schema:
+        if "target_config" in column_config.get("config", {}):
+            target_columns.append(column_config)
+        else:
+            feature_columns.append(column_config)
+
     for _ in range(num_rows):
         row = {}
-        for column_config in schema:
+
+        # Step 1: Generate all feature columns first
+        for column_config in feature_columns:
             column_name = column_config["name"]
             column_type = column_config["type"]
             config = column_config.get("config", {})
@@ -87,6 +100,28 @@ def generate_data(schema: list[dict[str, Any]], num_rows: int) -> list[dict[str,
             value = apply_quality_config(
                 value, column_type, quality_config, previous_values[column_name]
             )
+
+            # Track for duplicates (only track non-null values)
+            if value is not None:
+                previous_values[column_name].append(value)
+
+            row[column_name] = value
+
+        # Step 2: Generate target columns (can access feature values)
+        for column_config in target_columns:
+            column_name = column_config["name"]
+            column_type = column_config["type"]
+            config = column_config.get("config", {})
+
+            # Generate target based on row features
+            value = generate_target_value(row, column_config)
+
+            # Targets can also have quality degradation
+            if "quality_config" in config:
+                quality_config = QualityConfig(**config["quality_config"])
+                value = apply_quality_config(
+                    value, column_type, quality_config, previous_values[column_name]
+                )
 
             # Track for duplicates (only track non-null values)
             if value is not None:

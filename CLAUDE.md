@@ -53,7 +53,8 @@ data_generation/
 │   ├── core/                # Core business logic
 │   │   ├── agent.py         # LangGraph ReAct agent
 │   │   ├── generator.py     # Data generation engine (17+ types)
-│   │   └── quality.py       # Data quality degradation module
+│   │   ├── quality.py       # Data quality degradation module
+│   │   └── target_generation.py  # Target variable generation (ML use cases)
 │   ├── tools/               # LangChain tools
 │   │   ├── schema_inference.py      # LLM-based schema inference
 │   │   ├── data_generation.py       # Data generation tool
@@ -66,7 +67,8 @@ data_generation/
 │   ├── test_quality_validation.py     # 40+ quality tests
 │   ├── test_statistical_validation.py # 20+ statistical tests
 │   ├── test_ml_validation.py          # 20+ ML fitness tests
-│   └── test_model_training.py         # 30+ model training tests
+│   ├── test_model_training.py         # 30+ model training tests
+│   └── test_target_generation.py      # 23 target generation tests
 ├── examples/                # Usage examples
 │   └── related_tables.md    # Foreign key documentation
 └── pyproject.toml          # Project configuration
@@ -210,6 +212,157 @@ Schemas are defined as YAML lists with the following structure:
 - Reference files are cached by `{file}:{column}` to optimize performance
 - Multiple columns can reference the same file (shared cache)
 - Values are randomly selected from the reference column
+
+### Target Variable Generation (ML Use Cases)
+
+For machine learning use cases, you can configure target variables to depend on feature values. This enables generating datasets suitable for training and evaluating ML models.
+
+**Key Concepts:**
+- **Feature columns**: Regular columns generated independently (must be defined first)
+- **Target columns**: Columns with `target_config` that depend on feature values
+- **Two-phase generation**: Features are generated first, then targets can access feature values
+- **Single mode per schema**: All target columns must use the same `generation_mode`
+
+#### Mode 1: Rule-Based (Classification)
+
+Generate boolean targets based on simple threshold rules. Best for fraud detection, anomaly detection, or any binary classification with clear decision boundaries.
+
+```yaml
+# Features (generated first)
+- name: transaction_amount
+  type: currency
+  config:
+    min: 10.0
+    max: 10000.0
+
+- name: hour_of_day
+  type: int
+  config:
+    min: 0
+    max: 23
+
+# Target (generated second, can reference features)
+- name: is_fraud
+  type: bool
+  config:
+    target_config:
+      generation_mode: "rule_based"
+      rules:
+        - conditions:
+            - feature: transaction_amount
+              operator: ">"
+              value: 5000
+            - feature: hour_of_day
+              operator: ">="
+              value: 22
+          probability: 0.8  # 80% fraud when ALL conditions match
+        - conditions:
+            - feature: transaction_amount
+              operator: ">"
+              value: 5000
+          probability: 0.6  # 60% fraud (if previous rule didn't match)
+      default_probability: 0.05  # 5% fraud otherwise
+```
+
+**Behavior:**
+- Rules evaluated in order (first match wins)
+- Each rule has a list of `conditions` (ALL must be true - AND logic) and a `probability`
+- Supported operators: `>`, `<`, `>=`, `<=`, `==`, `!=`
+- If all conditions match, generate target with that probability
+- If no rules match, use `default_probability`
+
+**Example CLI request:**
+```bash
+data-generation "Generate 1000 transactions. Flag as fraud if amount > 5000 and hour >= 22"
+```
+
+#### Mode 2: Probabilistic (Weighted Features)
+
+Generate binary targets using weighted feature influence. Best for churn prediction, conversion likelihood, or any binary outcome with multiple contributing factors.
+
+```yaml
+# Features
+- name: tenure_months
+  type: int
+  config:
+    min: 1
+    max: 120
+
+- name: support_tickets
+  type: int
+  config:
+    min: 0
+    max: 20
+
+- name: monthly_charges
+  type: currency
+  config:
+    min: 20.0
+    max: 200.0
+
+# Target
+- name: will_churn
+  type: bool
+  config:
+    target_config:
+      generation_mode: "probabilistic"
+      base_probability: 0.25  # 25% base churn rate
+      feature_weights:
+        tenure_months: -0.002    # -0.2% per month (longer tenure = less churn)
+        support_tickets: 0.03     # +3% per ticket
+        monthly_charges: 0.001    # +0.1% per dollar
+      min_probability: 0.05  # Clamp minimum to 5%
+      max_probability: 0.90  # Clamp maximum to 90%
+```
+
+**Behavior:**
+- Start with `base_probability`
+- Add weighted contribution from each feature: `probability += weight * feature_value`
+- Clamp to `[min_probability, max_probability]`
+- Generate boolean based on final probability
+
+**Example CLI request:**
+```bash
+data-generation "Generate 2000 customers. Churn probability increases with support tickets and decreases with tenure"
+```
+
+#### Target Generation Important Notes
+
+**Schema Structure:**
+- Feature columns MUST be defined BEFORE target columns
+- All target columns in a schema MUST use the SAME `generation_mode`
+- Targets can reference any feature column by name in conditions
+
+**Quality Degradation:**
+- Targets support all quality_config parameters (null_rate, duplicate_rate, etc.)
+- Quality degradation applied AFTER target value generation
+
+**Safe Implementation:**
+- No code evaluation - uses simple dictionary comparisons
+- Zero security risk - pure data structure operations
+- Conditions are structured data (not string expressions)
+- Invalid operators or missing features cause condition to evaluate to False
+
+**Supported Operators:**
+- `>` - greater than
+- `<` - less than
+- `>=` - greater than or equal
+- `<=` - less than or equal
+- `==` - equal to
+- `!=` - not equal to
+
+**V1 Limitations:**
+- Only boolean targets for both modes
+- Only AND logic within a rule (all conditions must be true)
+- No OR logic between conditions (use multiple rules as workaround)
+- No multi-level dependencies (targets can't depend on other targets)
+- No multi-class categorical targets (future enhancement)
+
+**LLM Mode Selection:**
+The schema inference tool automatically selects the appropriate mode based on:
+- Explicit conditions ("if amount > 5000") → `rule_based`
+- Probability language ("churn increases with tickets") → `probabilistic`
+- Users never need to specify the mode explicitly
 
 ## Data Quality Degradation
 
