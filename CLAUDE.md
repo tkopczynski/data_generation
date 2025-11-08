@@ -21,23 +21,28 @@ Data Generation Engine (core/generator.py)
     ↓
 Quality Degradation (core/quality.py)
     ↓
-CSV Output (pandas DataFrame)
+Output Format Writer (core/output_formats.py)
+    ↓
+File Output (CSV/JSON/Parquet/Excel)
 ```
 
 ### ReAct Agent Workflow
 The agent in `src/data_generation/core/agent.py` uses a ReAct (Reasoning + Acting) pattern:
 
 1. **Reasoning Phase**: Agent analyzes the user's natural language request
-2. **Schema Inference**: Calls `infer_schema_tool` to generate YAML schema
-3. **Validation**: Schema validated against rules in `schema_validation.py`
-4. **Generation**: Calls `generate_data_tool` with schema and row count
-5. **Output**: Returns absolute path to generated CSV file
+2. **Format Detection**: Detects desired output format (CSV, JSON, Parquet, Excel)
+3. **Schema Inference**: Calls `infer_schema_tool` to generate YAML schema
+4. **Validation**: Schema validated against rules in `schema_validation.py`
+5. **Generation**: Calls `generate_data_tool` with schema, row count, and format
+6. **Output**: Returns absolute path to generated file in requested format
 
 **Key Agent Behaviors:**
 - Uses `gpt-4o-mini` with temperature=0 for deterministic responses
 - Defaults to 100 rows if not specified
+- Defaults to CSV format if not specified
 - Generates parent tables before child tables (for references)
 - Detects and handles multi-table relationships
+- Detects output format from natural language cues
 
 ## Project Structure
 
@@ -54,6 +59,7 @@ data_generation/
 │   │   ├── agent.py         # LangGraph ReAct agent
 │   │   ├── generator.py     # Data generation engine (17+ types)
 │   │   ├── quality.py       # Data quality degradation module
+│   │   ├── output_formats.py  # Multi-format output writer
 │   │   └── target_generation.py  # Target variable generation (ML use cases)
 │   ├── tools/               # LangChain tools
 │   │   ├── schema_inference.py      # LLM-based schema inference
@@ -69,7 +75,8 @@ data_generation/
 │   ├── test_ml_validation.py          # 20+ ML fitness tests
 │   ├── test_model_training.py         # 30+ model training tests
 │   ├── test_target_generation.py      # 23 target generation tests
-│   └── test_reproducibility.py        # 18 reproducibility tests
+│   ├── test_reproducibility.py        # 18 reproducibility tests
+│   └── test_output_formats.py         # 24 output format tests
 ├── examples/                # Usage examples
 │   └── related_tables.md    # Foreign key documentation
 └── pyproject.toml          # Project configuration
@@ -107,6 +114,218 @@ python -m data_generation "Generate 100 users with names and emails"
 # From the old main.py (still works for backward compatibility)
 python main.py "Generate 100 users with names and emails"
 ```
+
+## Output Formats
+
+The data generation tool supports multiple output formats for maximum flexibility.
+
+### Supported Formats
+
+| Format | Extension | Use Case | Dependencies |
+|--------|-----------|----------|--------------|
+| **CSV** | `.csv` | Default, universal compatibility | pandas (built-in) |
+| **JSON** | `.json` | APIs, web applications, nested data | pandas (built-in) |
+| **Parquet** | `.parquet` | Big data, columnar storage, analytics | pyarrow |
+| **Excel** | `.xlsx` | Business users, spreadsheet applications | openpyxl |
+
+### Usage Methods
+
+**1. Natural Language (Primary Method):**
+
+The agent automatically detects format from your request using phrases like:
+- "as JSON" → JSON format
+- "in parquet format" → Parquet format
+- "save as excel" / "to xlsx" → Excel format
+- No format mentioned → CSV (default)
+
+```bash
+# Generate JSON
+data-generation "100 users with names and emails as JSON"
+
+# Generate Parquet
+data-generation "500 transactions in parquet format"
+
+# Generate Excel
+data-generation "200 products save as excel"
+
+# Default to CSV
+data-generation "100 users"  # Creates CSV file
+```
+
+**2. CLI Flag (Explicit Override):**
+
+Use `--format` or `-f` to explicitly specify the format. This overrides any format mentioned in the request.
+
+```bash
+# Explicit format specification
+data-generation "100 users" --format json
+data-generation "100 users" -f parquet
+data-generation "100 users" --format xlsx
+
+# Override natural language format
+data-generation "100 users as CSV" --format json  # Creates JSON, not CSV
+```
+
+**3. Combined with Other Options:**
+
+```bash
+# Format + Reproducibility
+data-generation "100 users" --format json --seed 123456
+
+# Format + Natural language details
+data-generation "100 users with emails (10% null)" --format parquet
+```
+
+### Format Behavior
+
+**Auto-Extension Adjustment:**
+- File extensions automatically adjusted to match format
+- Request `data.csv` with `--format json` → creates `data.json`
+- If no extension provided, adds appropriate one
+
+**Format Priority:**
+1. CLI `--format` flag (highest priority)
+2. Natural language format detection
+3. Default to CSV
+
+### Format-Specific Features
+
+**CSV:**
+- Default format, maximum compatibility
+- No index column (clean output)
+- UTF-8 encoding
+
+**JSON:**
+- Records orientation (array of objects)
+- Pretty-printed with 2-space indentation
+- Human-readable structure
+- Ideal for APIs and web services
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Alice",
+    "email": "alice@example.com"
+  },
+  {
+    "id": 2,
+    "name": "Bob",
+    "email": "bob@example.com"
+  }
+]
+```
+
+**Parquet:**
+- Columnar storage format
+- Highly compressed
+- Optimized for analytics and big data workflows
+- Preserves data types efficiently
+- Uses PyArrow engine
+
+**Excel (XLSX):**
+- Compatible with Microsoft Excel, Google Sheets, LibreOffice
+- Single worksheet containing all data
+- No index column
+- Preserves data types
+
+### Examples
+
+**Multi-Format Workflow:**
+```bash
+# Generate training data as Parquet (efficient)
+data-generation "10000 transactions" --format parquet --seed 777888
+
+# Generate sample for business review as Excel
+data-generation "100 transactions" --format xlsx --seed 777888
+
+# Generate API response as JSON
+data-generation "20 transactions" --format json --seed 777888
+```
+
+**Multi-Table with Different Formats:**
+```bash
+# Parent table as JSON
+data-generation "50 users with user_id (uuid), name, email as JSON"
+
+# Child table as Parquet (referencing JSON file)
+data-generation "1000 transactions with user_id referencing users.json in parquet format"
+```
+
+**Quality Degradation with Formats:**
+```bash
+# All formats support quality degradation
+data-generation "500 users with emails (15% null, 5% invalid)" --format json
+data-generation "500 users with emails (15% null, 5% invalid)" --format parquet
+data-generation "500 users with emails (15% null, 5% invalid)" --format xlsx
+```
+
+### Programmatic Usage
+
+```python
+from data_generation.core.generator import generate_data_with_seed
+from data_generation.core.output_formats import write_dataframe
+import pandas as pd
+
+schema = [
+    {"name": "id", "type": "int", "config": {"min": 1, "max": 1000}},
+    {"name": "name", "type": "name"},
+    {"name": "email", "type": "email"},
+]
+
+# Generate data
+data, seed = generate_data_with_seed(schema, 100)
+df = pd.DataFrame(data)
+
+# Write in different formats
+write_dataframe(df, "users.csv", "csv")
+write_dataframe(df, "users.json", "json")
+write_dataframe(df, "users.parquet", "parquet")
+write_dataframe(df, "users.xlsx", "xlsx")
+```
+
+### CLI Options Reference
+
+| Option | Short | Values | Description |
+|--------|-------|--------|-------------|
+| `--format` | `-f` | csv, json, parquet, xlsx | Output format (overrides natural language) |
+| `--seed` | | 6-digit number | Reproducibility code |
+
+### Technical Details
+
+**File Extension Handling:**
+- Automatic extension adjustment via `adjust_file_extension()`
+- Format detection from filename via `detect_format_from_filename()`
+- Path-aware (handles directories and multiple dots)
+
+**Error Handling:**
+- Invalid formats raise `ValueError` with supported formats list
+- Missing dependencies (pyarrow, openpyxl) raise clear import errors
+- Write failures include format-specific error messages
+
+**Testing:**
+- 24 comprehensive tests in `tests/test_output_formats.py`
+- Tests cover all formats, extension adjustment, integration scenarios
+- Quality degradation tested with each format
+
+### Limitations & Notes
+
+**Reference Type:**
+- Reference type works across formats
+- Can reference parent file in any format (CSV, JSON, Parquet, Excel)
+- Example: Child table in Parquet can reference parent in JSON
+
+**Data Type Preservation:**
+- Parquet preserves types most accurately
+- Excel may modify types (dates, large numbers)
+- JSON stores everything as JSON types
+- CSV stores everything as strings (parsed on read)
+
+**Performance:**
+- CSV: Fast, moderate size
+- JSON: Moderate speed, larger files
+- Parquet: Fast with compression, smallest files
+- Excel: Slower for large datasets, moderate size
 
 ## Reproducibility
 
@@ -998,12 +1217,13 @@ Configuration is in `pyproject.toml` under `[tool.ruff]`
 ## Key Features Summary
 
 - **17+ Data Types**: Comprehensive coverage from primitives to references
+- **Multiple Output Formats**: CSV, JSON, Parquet, Excel with natural language detection
 - **LangGraph ReAct Agent**: Autonomous workflow orchestration with multi-table support
 - **Data Quality Degradation**: 5 quality dimensions (null, duplicate, similar, outlier, format)
 - **Reference Type**: Foreign key relationships with intelligent caching
 - **Schema Validation**: Comprehensive validation with detailed error messages
-- **Statistical Testing**: 150+ tests ensuring correctness and ML readiness
-- **Flexible Output**: CSV format with pandas DataFrame integration
+- **Reproducibility**: 6-digit codes for deterministic data generation
+- **Statistical Testing**: 180+ tests ensuring correctness and ML readiness
 - **Natural Language Interface**: Generate complex datasets from simple descriptions
 
 ## Error Handling Patterns
