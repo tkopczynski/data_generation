@@ -12,12 +12,13 @@ from data_generation.tools.schema_inference import infer_schema_tool
 logger = logging.getLogger(__name__)
 
 
-def create_data_generation_agent(seed: int | None = None):
+def create_data_generation_agent(seed: int | None = None, output_format: str | None = None):
     """
     Create a LangGraph ReAct agent for data generation that can handle multiple files.
 
     Args:
         seed: Optional reproducibility code to pass to generation tools
+        output_format: Optional output format to override natural language detection
 
     Returns:
         Compiled LangGraph agent configured with data generation tools
@@ -39,6 +40,21 @@ REPRODUCIBILITY:
 - The generate_data_tool will automatically create a reproducibility code
 - Include the reproducibility code in your final response to the user"""
 
+    format_instruction = ""
+    if output_format is not None:
+        format_instruction = f"""
+FORMAT OVERRIDE:
+- The user has explicitly specified the output format: {output_format}
+- Use '{output_format}' as the output_format parameter for ALL generate_data_tool calls
+- Ignore any format mentioned in the natural language request"""
+    else:
+        format_instruction = """
+FORMAT DETECTION:
+- Detect the desired format from the user's request (csv, json, parquet, xlsx)
+- Look for phrases like "as JSON", "in parquet format", "save as excel", "to xlsx"
+- If no format is specified, use 'csv' as default
+- Pass the detected format to generate_data_tool as the output_format parameter"""
+
     system_message = f"""You are a data generation assistant. \
 You help users generate synthetic datasets.
 
@@ -47,7 +63,7 @@ When the user requests data generation:
 2. Determine if datasets have relationships (e.g., foreign keys)
 3. For EACH dataset:
    a. Use infer_schema_tool with a description of the data
-   b. Use generate_data_tool with the schema, number of rows, output file, and seed
+   b. Use generate_data_tool with the schema, number of rows, output file, seed, and output_format
 4. Continue until all datasets are generated
 
 IMPORTANT INSTRUCTIONS:
@@ -55,9 +71,10 @@ IMPORTANT INSTRUCTIONS:
 - If output file is not specified, use "generated_data.csv" for single file or \
 descriptive names for multiple files
 - For generate_data_tool, the input MUST be valid JSON with keys: \
-schema_yaml, num_rows, output_file, seed
+schema_yaml, num_rows, output_file, seed, output_format
 - Use the EXACT schema_yaml from infer_schema_tool output (as a string)
 {seed_instruction}
+{format_instruction}
 
 RELATIONSHIPS BETWEEN TABLES:
 - When generating related tables (e.g., users and transactions), generate the PARENT \
@@ -65,32 +82,37 @@ table FIRST (e.g., users.csv), THEN the child table (e.g., transactions.csv)
 - For child tables, use the 'reference' type to link to parent tables
 - When describing the schema for a child table, mention the relationship explicitly \
 (e.g., "transactions with user_id referencing users.csv")
-- The reference type requires reference_file (path to parent CSV) and reference_column \
-(column name in parent CSV)"""
+- The reference type requires reference_file (path to parent CSV/JSON/etc) and reference_column \
+(column name in parent file)"""
 
     agent = create_react_agent(llm, tools, prompt=system_message)
 
     return agent
 
 
-def run_agent(user_request: str, seed: int | None = None) -> str:
+def run_agent(
+    user_request: str, seed: int | None = None, output_format: str | None = None
+) -> str:
     """
     Run the LangGraph ReAct agent with a user request.
 
     Args:
         user_request: Natural language request for data generation
         seed: Optional reproducibility code for deterministic generation
+        output_format: Optional output format to override natural language detection
 
     Returns:
         Agent's response with reproducibility information
     """
-    agent = create_data_generation_agent(seed)
+    agent = create_data_generation_agent(seed, output_format)
 
     try:
+        log_parts = [f"Processing request"]
         if seed is not None:
-            logger.info(f"Processing request with reproducibility code {seed}: {user_request}")
-        else:
-            logger.info(f"Processing request: {user_request}")
+            log_parts.append(f"reproducibility code {seed}")
+        if output_format is not None:
+            log_parts.append(f"format {output_format}")
+        logger.info(f"{log_parts[0]}{' with ' + ', '.join(log_parts[1:]) if len(log_parts) > 1 else ''}: {user_request}")
 
         result = agent.invoke({"messages": [("user", user_request)]})
 
