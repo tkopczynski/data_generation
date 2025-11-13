@@ -9,11 +9,11 @@ Supports two generation modes:
 2. probabilistic: Binary classification with weighted feature influence
 """
 
-from typing import Any, Dict
 import random
+from typing import Any
 
 
-def generate_target_value(row: Dict[str, Any], column_config: Dict) -> Any:
+def generate_target_value(row: dict[str, Any], column_config: dict) -> Any:
     """
     Generate a target value based on feature values in the row.
 
@@ -39,7 +39,7 @@ def generate_target_value(row: Dict[str, Any], column_config: Dict) -> Any:
 
 
 def _generate_rule_based_target(
-    row: Dict[str, Any], config: Dict, target_type: str
+    row: dict[str, Any], config: dict, target_type: str
 ) -> Any:
     """
     Generate target using rule-based approach with simple threshold rules.
@@ -95,7 +95,7 @@ def _generate_rule_based_target(
         raise NotImplementedError("Only bool targets supported in V1")
 
 
-def _evaluate_condition(condition: Dict[str, Any], row: Dict[str, Any]) -> bool:
+def _evaluate_condition(condition: dict[str, Any], row: dict[str, Any]) -> bool:
     """
     Evaluate a simple threshold condition.
 
@@ -149,7 +149,7 @@ def _evaluate_condition(condition: Dict[str, Any], row: Dict[str, Any]) -> bool:
 
 
 def _generate_probabilistic_target(
-    row: Dict[str, Any], config: Dict, target_type: str
+    row: dict[str, Any], config: dict, target_type: str
 ) -> Any:
     """
     Generate target using probabilistic feature weighting.

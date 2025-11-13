@@ -107,7 +107,7 @@ def run_agent(
     agent = create_data_generation_agent(seed, output_format)
 
     try:
-        log_parts = [f"Processing request"]
+        log_parts = ["Processing request"]
         if seed is not None:
             log_parts.append(f"reproducibility code {seed}")
         if output_format is not None:

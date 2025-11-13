@@ -73,6 +73,15 @@ def _generate_data_internal(
     # Track previous values per column for duplicate injection
     previous_values: dict[str, list[Any]] = {field["name"]: [] for field in schema}
 
+    precomputed_quality_configs: dict[str, QualityConfig | None] = {}
+    for column_config in schema:
+        column_name = column_config["name"]
+        config = column_config.get("config", {})
+        if "quality_config" in config:
+            precomputed_quality_configs[column_name] = QualityConfig(**config["quality_config"])
+        else:
+            precomputed_quality_configs[column_name] = None
+
     # Separate feature columns from target columns
     feature_columns = []
     target_columns = []
@@ -92,10 +101,7 @@ def _generate_data_internal(
             column_type = column_config["type"]
             config = column_config.get("config", {})
 
-            # Parse quality config if present
-            quality_config = None
-            if "quality_config" in config:
-                quality_config = QualityConfig(**config["quality_config"])
+            quality_config = precomputed_quality_configs[column_name]
 
             # Generate base value
             value = _generate_value(fake, column_type, config, reference_cache)
@@ -120,9 +126,8 @@ def _generate_data_internal(
             # Generate target based on row features
             value = generate_target_value(row, column_config)
 
-            # Targets can also have quality degradation
-            if "quality_config" in config:
-                quality_config = QualityConfig(**config["quality_config"])
+            quality_config = precomputed_quality_configs[column_name]
+            if quality_config is not None:
                 value = apply_quality_config(
                     value, column_type, quality_config, previous_values[column_name]
                 )
