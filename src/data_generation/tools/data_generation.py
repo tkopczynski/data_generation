@@ -1,7 +1,6 @@
 """LangChain tool for data generation."""
 
 import logging
-from pathlib import Path
 
 import pandas as pd
 import yaml
