@@ -94,7 +94,8 @@ class TestNullRateValidation:
         schema = [
             {"name": "value", "type": "int", "config": {"quality_config": {"null_rate": 0.25}}}
         ]
-        data = generate_data(schema, 1000)
+        # Use larger sample size (5000) to reduce statistical variance
+        data = generate_data(schema, 5000)
 
         null_count = sum(1 for row in data if row["value"] is None)
         null_rate = null_count / len(data)
