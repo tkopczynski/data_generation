@@ -201,13 +201,16 @@ Generate multiple related datasets with consistent randomness:
 
 ```bash
 # Training data
-data-generation "10000 transactions" --seed 123456 --format parquet
+data-generation "10000 transactions with transaction_id, customer_id, amount between $10 and $5000,
+  timestamp, and status (pending, completed, failed)" --seed 123456 --format parquet
 
 # Sample for review
-data-generation "100 transactions" --seed 123456 --format xlsx
+data-generation "100 transactions with transaction_id, customer_id, amount between $10 and $5000,
+  timestamp, and status (pending, completed, failed)" --seed 123456 --format xlsx
 
 # API response format
-data-generation "20 transactions" --seed 123456 --format json
+data-generation "20 transactions with transaction_id, customer_id, amount between $10 and $5000,
+  timestamp, and status (pending, completed, failed)" --seed 123456 --format json
 ```
 
 All three files will have the same underlying data (just different row counts/formats).
