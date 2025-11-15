@@ -35,15 +35,20 @@ The schema should be in YAML format with the following structure:
     reference_file: file.csv (for reference - REQUIRED)
     reference_column: column_name (for reference - REQUIRED)
 
-    # Target variable configuration (for ML use cases)
+    # Target variable configuration (for ML use cases - OPTIONAL)
     target_config:
-      generation_mode: rule_based|formula|probabilistic
+      generation_mode: rule_based|probabilistic
       # See mode-specific examples below
 
 TARGET VARIABLE GENERATION (for ML/predictive modeling):
 
-If the description mentions a target/outcome variable that should depend on other features,
-use target_config with the appropriate generation_mode:
+IMPORTANT: Only use target_config when the description EXPLICITLY mentions that a column
+should DEPEND on other columns (e.g., "flag fraud if amount > 5000", "churn probability
+increases with support tickets"). For independent columns like house prices, bedrooms,
+ages, etc., DO NOT use target_config - just generate them as regular independent columns.
+
+If the description explicitly mentions a target/outcome variable that should depend on
+other features, use target_config with the appropriate generation_mode:
 
 MODE 1: rule_based - For classification with explicit conditional rules
 Use when: Description mentions "if/when/rule", explicit conditions, or thresholds
@@ -73,18 +78,7 @@ Example:
 Supported operators: ">", "<", ">=", "<=", "==", "!="
 All conditions in a rule are evaluated with AND logic (all must be true)
 
-MODE 2: formula - For continuous targets with mathematical relationships
-Use when: Target is continuous (float/currency/int) with mathematical dependencies
-Example:
-  - name: house_price
-    type: currency
-    config:
-      target_config:
-        generation_mode: "formula"
-        formula: "100000 + (bedrooms * 50000) + (sqft * 150) + noise"
-        noise_std: 20000
-
-MODE 3: probabilistic - For binary outcomes with weighted feature influence
+MODE 2: probabilistic - For binary outcomes with weighted feature influence
 Use when: Description mentions "probability", "likelihood", "weighted influence"
 Example:
   - name: will_churn
@@ -101,10 +95,10 @@ Example:
 
 MODE SELECTION HEURISTICS:
 - Explicit conditions/rules (e.g., "fraud if amount > 5000") → rule_based
-- Continuous target with formula (e.g., "price based on bedrooms + sqft") → formula
 - Binary target with weighted features (e.g., "churn increases with tickets") → probabilistic
 - Boolean target without conditions → rule_based with simple rules
 - ALL target columns in a schema MUST use the SAME generation_mode
+- For regular independent columns (prices, ages, dates, etc.) → DO NOT use target_config
 
 IMPORTANT NOTES:
 - Feature columns (non-targets) MUST be defined BEFORE target columns in the schema
