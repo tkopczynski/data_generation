@@ -81,18 +81,21 @@ data-generation "100 users" --format xlsx
 
 ### 3. Related Tables (Foreign Keys)
 
-Generate parent and child tables with relationships:
+Generate parent and child tables with relationships in a **single request**:
 
 ```bash
-# Step 1: Generate parent table
-data-generation "50 users with user_id (uuid), name, and email, save to users.csv"
-
-# Step 2: Generate child table that references the parent
-data-generation "500 orders with order_id (uuid), user_id referencing users.csv,
-  amount between $10 and $500, and order date, save to orders.csv"
+# Generate both tables together - the agent handles the relationship
+data-generation "Generate 50 users with user_id (uuid), name, and email saved to users.csv,
+  and 500 orders with order_id (uuid), user_id referencing users.csv,
+  amount between $10 and $500, and order date saved to orders.csv"
 ```
 
-Each order will have a `user_id` that matches one of the users from `users.csv`.
+The agent automatically:
+- Generates the parent table (users) first
+- Then generates the child table (orders) with `user_id` values that match users from `users.csv`
+- Handles the relationship using the reference type internally
+
+**Important:** Request both tables in one command - the agent cannot reference files from previous separate commands.
 
 ### 4. Messy Data (Quality Degradation)
 
@@ -247,17 +250,11 @@ data-generation "10000 user sessions with session_id, user_id, duration_minutes,
 
 ### Database Seeding
 ```bash
-# Users table
-data-generation "1000 users with user_id (uuid), username, email, created_at"
-  --output users.csv
-
-# Posts table (references users)
-data-generation "5000 posts with post_id (uuid), user_id referencing users.csv,
-  title, content, created_at" --output posts.csv
-
-# Comments table (references posts)
-data-generation "20000 comments with comment_id (uuid), post_id referencing posts.csv,
-  user_id referencing users.csv, content, created_at" --output comments.csv
+# Generate all related tables in one request
+data-generation "Generate 1000 users with user_id (uuid), username, email, created_at saved to users.csv,
+  5000 posts with post_id (uuid), user_id referencing users.csv, title, content, created_at saved to posts.csv,
+  and 20000 comments with comment_id (uuid), post_id referencing posts.csv,
+  user_id referencing users.csv, content, created_at saved to comments.csv"
 ```
 
 ## Command Options
@@ -290,12 +287,12 @@ data-generation "500 customer records with emails, some may have typos (3%)
   and missing values (10%)"
 ```
 
-**3. Chain related table generation:**
+**3. Generate related tables together:**
 ```bash
-# Use descriptive filenames
-data-generation "100 customers" --output customers.csv
-data-generation "1000 orders referencing customers.csv" --output orders.csv
-data-generation "5000 order_items referencing orders.csv" --output order_items.csv
+# Request all related tables in a single command
+data-generation "Generate 100 customers saved to customers.csv,
+  1000 orders with customer_id referencing customers.csv saved to orders.csv,
+  and 5000 order_items with order_id referencing orders.csv saved to order_items.csv"
 ```
 
 **4. Use seeds for reproducible experiments:**

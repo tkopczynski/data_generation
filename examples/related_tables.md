@@ -4,17 +4,19 @@ This example demonstrates how to generate related tables using the `reference` t
 
 ## Example: Users and Transactions
 
-### Step 1: Generate the parent table (users)
+Generate both parent and child tables in a **single request**:
 
 ```bash
-python main.py "Generate 50 users with user_id (uuid), name, and email, save to users.csv"
+data-generation "Generate 50 users with user_id (uuid), name, and email saved to users.csv,
+  and 200 transactions with transaction_id (uuid), user_id referencing users.csv,
+  amount (currency between 10 and 1000), and date saved to transactions.csv"
 ```
 
-### Step 2: Generate the child table (transactions)
+The agent will:
+1. Generate the parent table (users.csv) first
+2. Then generate the child table (transactions.csv) with user_id values referencing users.csv
 
-```bash
-python main.py "Generate 200 transactions with transaction_id (uuid), user_id referencing users.csv, amount (currency between 10 and 1000), and date, save to transactions.csv"
-```
+**Important:** The agent cannot reference files from previous separate commands - you must request all related tables in one command.
 
 ## Manual Schema Example
 
@@ -61,6 +63,8 @@ You can also create schemas manually:
 - **Validation**: Proper error messages if reference file or column doesn't exist
 - **Natural Distribution**: References are randomly selected, creating realistic many-to-one relationships
 
-## Order Matters
+## Important Notes
 
-Always generate the parent table FIRST, then the child tables that reference it. The agent will handle this automatically when you describe related tables in natural language.
+- **Single Request Required**: You must request all related tables in one command. The agent cannot reference files created in previous separate commands.
+- **Order Handling**: When you describe related tables in natural language, the agent automatically generates the parent table first, then child tables.
+- **Multiple Relationships**: You can have child tables reference multiple parent tables in the same request (e.g., comments referencing both posts and users).
