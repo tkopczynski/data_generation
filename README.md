@@ -269,7 +269,6 @@ Options:
   -f, --format [csv|json|parquet|xlsx]  Output format (default: csv)
   --seed INTEGER                         6-digit reproducibility code
   --reproducibility-code INTEGER        Alias for --seed
-  --output PATH                          Output file path
   --help                                 Show help message
 ```
 
