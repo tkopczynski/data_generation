@@ -124,10 +124,16 @@ def generate_dataset_with_llm(
     logger.debug(f"Prompt: {prompt}")
 
     # Call LLM
-    llm = ChatOpenAI(
-        model=config.LLM_MODEL,
-        temperature=config.DATA_GENERATION_TEMPERATURE,
-    )
+    llm_kwargs = {
+        "model": config.LLM_MODEL,
+        "temperature": config.DATA_GENERATION_TEMPERATURE,
+    }
+    if config.LLM_BASE_URL:
+        llm_kwargs["base_url"] = config.LLM_BASE_URL
+    if config.LLM_API_KEY:
+        llm_kwargs["api_key"] = config.LLM_API_KEY
+
+    llm = ChatOpenAI(**llm_kwargs)
 
     response = llm.invoke(prompt)
     response_text = response.content
