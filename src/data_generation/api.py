@@ -18,6 +18,10 @@ def generate_dataset(
     target: dict[str, str] | None = None,
     output_path: str | Path | None = None,
     quality_issues: list[str] | None = None,
+    model: str | None = None,
+    base_url: str | None = None,
+    api_key: str | None = None,
+    temperature: float | None = None,
 ) -> pd.DataFrame:
     """
     Generate synthetic data using LLM based on column descriptions.
@@ -36,6 +40,13 @@ def generate_dataset(
         quality_issues: Optional list of data quality issues to introduce.
                         Supported values: "nulls", "outliers", "typos", "duplicates".
                         Example: ["nulls", "outliers"]
+        model: LLM model name. Defaults to LLM_MODEL env var or "gpt-4o-mini".
+        base_url: Base URL for OpenAI-compatible API. Defaults to LLM_BASE_URL env var.
+                  Examples: "http://localhost:11434/v1" (Ollama),
+                           "http://localhost:8000/v1" (vLLM)
+        api_key: API key for the LLM service. Defaults to LLM_API_KEY or OPENAI_API_KEY env var.
+        temperature: Sampling temperature (0.0-1.0). Defaults to DATA_GENERATION_TEMPERATURE
+                     env var or 0.7.
 
     Returns:
         pandas DataFrame containing the generated data
@@ -61,6 +72,14 @@ def generate_dataset(
         ...     num_rows=500,
         ...     output_path="customers.parquet"
         ... )
+
+        >>> # Using local Ollama
+        >>> df = generate_dataset(
+        ...     columns={"name": "Full name", "city": "US city"},
+        ...     num_rows=1000,
+        ...     base_url="http://localhost:11434/v1",
+        ...     model="llama3",
+        ... )
     """
     logger.info(f"Generating dataset: {num_rows} rows, columns={list(columns.keys())}")
 
@@ -83,7 +102,16 @@ def generate_dataset(
             )
 
     # Generate data using LLM
-    data = generate_dataset_with_llm(columns, num_rows, target, quality_issues)
+    data = generate_dataset_with_llm(
+        columns,
+        num_rows,
+        target,
+        quality_issues,
+        model=model,
+        base_url=base_url,
+        api_key=api_key,
+        temperature=temperature,
+    )
 
     # Convert to DataFrame
     df = pd.DataFrame(data)
