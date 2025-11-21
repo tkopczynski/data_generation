@@ -130,7 +130,17 @@ LLM_MODEL = "gpt-4o-mini"           # Model for generation
 DATA_GENERATION_TEMPERATURE = 0.7   # Higher = more variety
 ```
 
-## Testing
+## Validation & Testing
+
+```bash
+# Run full validation (linting, formatting, tests excluding integration)
+./scripts/validate.sh
+
+# Run full validation including integration tests
+./scripts/validate.sh --all
+```
+
+### Individual Commands
 
 ```bash
 # Run all tests (excluding integration)

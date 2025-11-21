@@ -79,8 +79,7 @@ def generate_dataset(
         invalid = set(quality_issues) - valid_quality_issues
         if invalid:
             raise ValueError(
-                f"Invalid quality_issues: {invalid}. "
-                f"Valid options: {sorted(valid_quality_issues)}"
+                f"Invalid quality_issues: {invalid}. Valid options: {sorted(valid_quality_issues)}"
             )
 
     # Generate data using LLM

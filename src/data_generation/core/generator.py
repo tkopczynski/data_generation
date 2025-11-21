@@ -48,16 +48,10 @@ def _build_prompt(
                 "- Include outlier values that are unusually high or low for numeric fields"
             )
         if "typos" in quality_issues:
-            issue_descriptions.append(
-                "- Include occasional typos or misspellings in text fields"
-            )
+            issue_descriptions.append("- Include occasional typos or misspellings in text fields")
         if "duplicates" in quality_issues:
-            issue_descriptions.append(
-                "- Include some duplicate rows (about 5-10% of rows)"
-            )
-        quality_section = "\n\nData quality issues to introduce:\n" + "\n".join(
-            issue_descriptions
-        )
+            issue_descriptions.append("- Include some duplicate rows (about 5-10% of rows)")
+        quality_section = "\n\nData quality issues to introduce:\n" + "\n".join(issue_descriptions)
 
     return f"""Generate a dataset with exactly {num_rows} rows containing the following columns:
 

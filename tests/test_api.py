@@ -46,9 +46,7 @@ class TestGenerateDatasetValidation:
     def test_invalid_quality_issues_not_list(self):
         """Test that non-list quality_issues raises ValueError."""
         with pytest.raises(ValueError, match="quality_issues must be a list"):
-            generate_dataset(
-                columns={"age": "Age of person"}, num_rows=10, quality_issues="nulls"
-            )
+            generate_dataset(columns={"age": "Age of person"}, num_rows=10, quality_issues="nulls")
 
     def test_invalid_quality_issues_unknown_value(self):
         """Test that unknown quality_issues value raises ValueError."""
@@ -252,6 +250,4 @@ class TestIntegration:
         assert "name" in df.columns
         assert "age" in df.columns
         assert "salary" in df.columns
-        # Check that some null values exist (quality degradation)
-        has_nulls = df.isnull().any().any()
         # Note: LLM may or may not introduce nulls, so we just verify it runs
