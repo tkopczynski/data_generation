@@ -15,28 +15,20 @@ class TestGenerateDatasetValidation:
     def test_invalid_target_not_dict(self):
         """Test that non-dict target raises ValueError."""
         with pytest.raises(ValueError, match="target must be a dictionary"):
-            generate_dataset(
-                columns={"age": "Age of person"},
-                num_rows=10,
-                target="invalid"
-            )
+            generate_dataset(columns={"age": "Age of person"}, num_rows=10, target="invalid")
 
     def test_invalid_target_missing_name(self):
         """Test that target without 'name' raises ValueError."""
         with pytest.raises(ValueError, match="target must have 'name' and 'prompt' keys"):
             generate_dataset(
-                columns={"age": "Age of person"},
-                num_rows=10,
-                target={"prompt": "Some prompt"}
+                columns={"age": "Age of person"}, num_rows=10, target={"prompt": "Some prompt"}
             )
 
     def test_invalid_target_missing_prompt(self):
         """Test that target without 'prompt' raises ValueError."""
         with pytest.raises(ValueError, match="target must have 'name' and 'prompt' keys"):
             generate_dataset(
-                columns={"age": "Age of person"},
-                num_rows=10,
-                target={"name": "target_col"}
+                columns={"age": "Age of person"}, num_rows=10, target={"name": "target_col"}
             )
 
     def test_invalid_output_extension(self, tmp_path):
@@ -48,9 +40,7 @@ class TestGenerateDatasetValidation:
 
             with pytest.raises(ValueError, match="Cannot infer format"):
                 generate_dataset(
-                    columns={"age": "Age"},
-                    num_rows=1,
-                    output_path=tmp_path / "data.txt"
+                    columns={"age": "Age"}, num_rows=1, output_path=tmp_path / "data.txt"
                 )
 
 
@@ -73,10 +63,7 @@ class TestGenerateDatasetWithMock:
             mock_llm.invoke.return_value.content = json.dumps(mock_llm_response)
             mock_llm_class.return_value = mock_llm
 
-            df = generate_dataset(
-                columns={"age": "Age", "salary": "Salary"},
-                num_rows=3
-            )
+            df = generate_dataset(columns={"age": "Age", "salary": "Salary"}, num_rows=3)
 
             assert isinstance(df, pd.DataFrame)
             assert len(df) == 3
@@ -99,7 +86,7 @@ class TestGenerateDatasetWithMock:
             df = generate_dataset(
                 columns={"age": "Age", "salary": "Salary"},
                 target={"name": "will_leave", "prompt": "Will leave company"},
-                num_rows=3
+                num_rows=3,
             )
 
             assert "will_leave" in df.columns
@@ -113,9 +100,7 @@ class TestGenerateDatasetWithMock:
 
             output_file = tmp_path / "test.csv"
             generate_dataset(
-                columns={"age": "Age", "salary": "Salary"},
-                num_rows=3,
-                output_path=output_file
+                columns={"age": "Age", "salary": "Salary"}, num_rows=3, output_path=output_file
             )
 
             assert output_file.exists()
@@ -128,14 +113,17 @@ class TestExports:
 
     def test_generate_dataset_is_exported(self):
         from data_generation import generate_dataset as gen
+
         assert callable(gen)
 
     def test_write_dataframe_is_exported(self):
         from data_generation import write_dataframe as wdf
+
         assert callable(wdf)
 
     def test_supported_formats_is_exported(self):
         from data_generation import SUPPORTED_FORMATS
+
         assert isinstance(SUPPORTED_FORMATS, list)
         assert "csv" in SUPPORTED_FORMATS
         assert "json" in SUPPORTED_FORMATS
@@ -185,7 +173,7 @@ class TestIntegration:
                 "name": "Person's full name",
                 "age": "Age between 20 and 60",
             },
-            num_rows=5
+            num_rows=5,
         )
 
         assert isinstance(df, pd.DataFrame)
@@ -200,11 +188,8 @@ class TestIntegration:
                 "tenure_months": "Months as customer, 1-60",
                 "monthly_spend": "Monthly spending in USD, 10-500",
             },
-            target={
-                "name": "churned",
-                "prompt": "Boolean indicating if customer churned"
-            },
-            num_rows=5
+            target={"name": "churned", "prompt": "Boolean indicating if customer churned"},
+            num_rows=5,
         )
 
         assert isinstance(df, pd.DataFrame)
