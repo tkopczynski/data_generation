@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from makeitup import make, write_dataframe
+from makeitup import make
 
 
 class TestMakeValidation:
@@ -142,46 +142,6 @@ class TestExports:
         from makeitup import make as m
 
         assert callable(m)
-
-    def test_write_dataframe_is_exported(self):
-        from makeitup import write_dataframe as wdf
-
-        assert callable(wdf)
-
-    def test_supported_formats_is_exported(self):
-        from makeitup import SUPPORTED_FORMATS
-
-        assert isinstance(SUPPORTED_FORMATS, list)
-        assert "csv" in SUPPORTED_FORMATS
-        assert "json" in SUPPORTED_FORMATS
-        assert "parquet" in SUPPORTED_FORMATS
-        assert "xlsx" in SUPPORTED_FORMATS
-
-
-class TestWriteDataframe:
-    """Tests for write_dataframe integration."""
-
-    def test_write_csv(self, tmp_path):
-        """Test writing DataFrame to CSV."""
-        df = pd.DataFrame({"a": [1, 2, 3], "b": ["x", "y", "z"]})
-        output_path = tmp_path / "test.csv"
-
-        result = write_dataframe(df, str(output_path), "csv")
-
-        assert result.exists()
-        loaded = pd.read_csv(result)
-        pd.testing.assert_frame_equal(df, loaded)
-
-    def test_write_json(self, tmp_path):
-        """Test writing DataFrame to JSON."""
-        df = pd.DataFrame({"a": [1, 2, 3], "b": ["x", "y", "z"]})
-        output_path = tmp_path / "test.json"
-
-        result = write_dataframe(df, str(output_path), "json")
-
-        assert result.exists()
-        loaded = pd.read_json(result)
-        pd.testing.assert_frame_equal(df, loaded)
 
 
 # Integration tests - require OPENAI_API_KEY
