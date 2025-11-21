@@ -1,9 +1,9 @@
-# data-generation
+# makeitup
 
 Generate synthetic datasets using LLM. Describe your columns in plain English and get realistic data back.
 
 ```python
-from data_generation import generate_dataset
+from makeitup import generate_dataset
 
 df = generate_dataset(
     columns={
@@ -32,7 +32,7 @@ cp .env.example .env
 ### Basic Data
 
 ```python
-from data_generation import generate_dataset
+from makeitup import generate_dataset
 
 # Customer data
 df = generate_dataset(
