@@ -8,6 +8,24 @@ version = "0.1.0"
 description = "LLM-based synthetic dataset generation"
 readme = "README.md"
 requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "Tomek Kopczynski", email = "wonsek@gmail.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Homepage = "https://github.com/tkopczynski/makeitup"
+Repository = "https://github.com/tkopczynski/makeitup"
+Issues = "https://github.com/tkopczynski/makeitup/issues"
 dependencies = [
     "langchain>=0.1.0",
     "langchain-openai>=0.0.5",
