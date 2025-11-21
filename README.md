@@ -1,5 +1,7 @@
 # makeitup
 
+[![PyPI version](https://badge.fury.io/py/makeitup.svg)](https://pypi.org/project/makeitup/)
+
 Generate synthetic datasets using LLM. Describe your columns in plain English and get realistic data back.
 
 ```python
@@ -15,17 +17,19 @@ df = make(
 )
 ```
 
-## Quick Start
+## Installation
 
 ```bash
-# Install
-uv venv && source .venv/bin/activate
-uv pip install -e .
-
-# Configure
-cp .env.example .env
-# Add your OpenAI API key to .env
+pip install makeitup
 ```
+
+Set your OpenAI API key:
+
+```bash
+export OPENAI_API_KEY=your-api-key
+```
+
+Or create a `.env` file in your project with `OPENAI_API_KEY=your-api-key`.
 
 ## Examples
 
