@@ -11,7 +11,7 @@ from makeitup.core.output_formats import detect_format_from_filename, write_data
 logger = logging.getLogger(__name__)
 
 
-def generate_dataset(
+def make(
     columns: dict[str, str],
     num_rows: int,
     *,
@@ -52,7 +52,7 @@ def generate_dataset(
         pandas DataFrame containing the generated data
 
     Examples:
-        >>> df = generate_dataset(
+        >>> df = make(
         ...     columns={
         ...         "age": "Age of working professionals, 25-55",
         ...         "salary": "Annual salary in USD, tech industry",
@@ -60,7 +60,7 @@ def generate_dataset(
         ...     num_rows=100
         ... )
 
-        >>> df = generate_dataset(
+        >>> df = make(
         ...     columns={
         ...         "tenure": "Months as customer, 1-60",
         ...         "monthly_spend": "Monthly spending in USD",
@@ -74,7 +74,7 @@ def generate_dataset(
         ... )
 
         >>> # Using local Ollama
-        >>> df = generate_dataset(
+        >>> df = make(
         ...     columns={"name": "Full name", "city": "US city"},
         ...     num_rows=1000,
         ...     base_url="http://localhost:11434/v1",

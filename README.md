@@ -3,9 +3,9 @@
 Generate synthetic datasets using LLM. Describe your columns in plain English and get realistic data back.
 
 ```python
-from makeitup import generate_dataset
+from makeitup import make
 
-df = generate_dataset(
+df = make(
     columns={
         "name": "Person's full name",
         "age": "Age between 25 and 55",
@@ -32,10 +32,10 @@ cp .env.example .env
 ### Basic Data
 
 ```python
-from makeitup import generate_dataset
+from makeitup import make
 
 # Customer data
-df = generate_dataset(
+df = make(
     columns={
         "customer_id": "Unique customer identifier",
         "name": "Customer full name",
@@ -49,7 +49,7 @@ df = generate_dataset(
 ### ML Dataset with Target Column
 
 ```python
-df = generate_dataset(
+df = make(
     columns={
         "tenure_months": "Months as customer, 1-60",
         "monthly_spend": "Monthly spending in USD, 10-500",
@@ -67,7 +67,7 @@ df = generate_dataset(
 
 ```python
 # Generate dataset with intentional quality issues for testing data pipelines
-df = generate_dataset(
+df = make(
     columns={
         "name": "Person's full name",
         "age": "Age between 20 and 60",
@@ -82,7 +82,7 @@ df = generate_dataset(
 
 ```python
 # CSV, JSON, Parquet, or Excel - format detected from extension
-df = generate_dataset(
+df = make(
     columns={"name": "Product name", "price": "Price in USD, 10-1000"},
     num_rows=200,
     output_path="products.csv"

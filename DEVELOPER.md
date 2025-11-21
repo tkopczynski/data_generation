@@ -1,6 +1,6 @@
 # Developer Guide
 
-Technical documentation for the data-generation library.
+Technical documentation for the makeitup library.
 
 ## Setup
 
@@ -33,10 +33,10 @@ Technical documentation for the data-generation library.
 ## Project Structure
 
 ```
-data_generation/
-├── src/data_generation/     # Main package
+makeitup/
+├── src/makeitup/            # Main package
 │   ├── __init__.py          # Package exports
-│   ├── api.py               # Public API: generate_dataset()
+│   ├── api.py               # Public API: make()
 │   ├── config.py            # LLM configuration
 │   ├── core/
 │   │   ├── generator.py     # LLM-based data generation
@@ -51,10 +51,10 @@ data_generation/
 
 ## API Reference
 
-### `generate_dataset()`
+### `make()`
 
 ```python
-def generate_dataset(
+def make(
     columns: dict[str, str],
     num_rows: int,
     *,
@@ -79,10 +79,10 @@ def generate_dataset(
 **Examples:**
 
 ```python
-from data_generation import generate_dataset
+from makeitup import make
 
 # Basic generation
-df = generate_dataset(
+df = make(
     columns={
         "age": "Age of working professionals, 25-55",
         "salary": "Annual salary in USD, tech industry",
@@ -91,7 +91,7 @@ df = generate_dataset(
 )
 
 # With target column for ML
-df = generate_dataset(
+df = make(
     columns={
         "tenure": "Months as customer, 1-60",
         "monthly_spend": "Monthly spending in USD",
@@ -105,7 +105,7 @@ df = generate_dataset(
 )
 
 # With data quality issues for testing data pipelines
-df = generate_dataset(
+df = make(
     columns={
         "name": "Person's full name",
         "age": "Age between 20 and 60",
@@ -129,7 +129,7 @@ Format is automatically detected from the file extension in `output_path`.
 
 ## Configuration
 
-Settings in `src/data_generation/config.py`:
+Settings in `src/makeitup/config.py`:
 
 ```python
 LLM_MODEL = "gpt-4o-mini"           # Model for generation
@@ -141,7 +141,7 @@ DATA_GENERATION_TEMPERATURE = 0.7   # Higher = more variety
 ```
 Python API Call
     ↓
-generate_dataset(columns, target, num_rows)
+make(columns, target, num_rows)
     ↓
 Single LLM Call (generates entire table as JSON)
     ↓
@@ -217,8 +217,8 @@ Use absolute imports:
 
 ```python
 # Correct
-from data_generation.core.generator import generate_dataset_with_llm
-from data_generation.core.output_formats import write_dataframe
+from makeitup.core.generator import generate_dataset_with_llm
+from makeitup.core.output_formats import write_dataframe
 
 # Incorrect (avoid relative imports)
 from ..core.generator import generate_dataset_with_llm
@@ -228,7 +228,7 @@ from ..core.generator import generate_dataset_with_llm
 
 | File | Purpose |
 |------|---------|
-| `api.py` | Public `generate_dataset()` function |
+| `api.py` | Public `make()` function |
 | `core/generator.py` | LLM prompt building and response parsing |
 | `core/output_formats.py` | File format writers |
 | `config.py` | LLM model and temperature settings |

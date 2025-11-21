@@ -12,7 +12,7 @@ A Python library for generating synthetic datasets using LLM (Large Language Mod
 ```
 Python API Call
     ↓
-generate_dataset(columns, target, num_rows)
+make(columns, target, num_rows)
     ↓
 Single LLM Call (generates entire table as JSON)
     ↓
@@ -33,7 +33,7 @@ DataFrame / File Output (CSV/JSON/Parquet/Excel)
 makeitup/
 ├── src/makeitup/            # Main package
 │   ├── __init__.py          # Package exports
-│   ├── api.py               # Public API: generate_dataset()
+│   ├── api.py               # Public API: make()
 │   ├── config.py            # LLM configuration
 │   ├── core/
 │   │   ├── generator.py     # LLM-based data generation
@@ -68,9 +68,9 @@ makeitup/
 ### Basic Generation
 
 ```python
-from makeitup import generate_dataset
+from makeitup import make
 
-df = generate_dataset(
+df = make(
     columns={
         "name": "Person's full name",
         "age": "Age between 25 and 55",
@@ -83,7 +83,7 @@ df = generate_dataset(
 ### With Target Column
 
 ```python
-df = generate_dataset(
+df = make(
     columns={
         "tenure_months": "Months as customer, 1-60",
         "monthly_spend": "Monthly spending in USD, 10-500",
@@ -101,7 +101,7 @@ df = generate_dataset(
 
 ```python
 # Format is inferred from file extension
-df = generate_dataset(
+df = make(
     columns={
         "product": "Product name",
         "price": "Price in USD, 10-1000",
@@ -194,7 +194,7 @@ Return ONLY a valid JSON array of objects. No explanation, no markdown, just the
 
 | File | Purpose |
 |------|---------|
-| `api.py` | Public `generate_dataset()` function |
+| `api.py` | Public `make()` function |
 | `core/generator.py` | LLM prompt building and response parsing |
 | `core/output_formats.py` | File format writers |
 | `config.py` | LLM model and temperature settings |

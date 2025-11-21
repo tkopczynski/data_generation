@@ -1,4 +1,4 @@
-"""Tests for the generate_dataset API."""
+"""Tests for the make() API."""
 
 import json
 from unittest.mock import MagicMock, patch
@@ -6,30 +6,26 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from makeitup import generate_dataset, write_dataframe
+from makeitup import make, write_dataframe
 
 
-class TestGenerateDatasetValidation:
-    """Tests for input validation in generate_dataset()."""
+class TestMakeValidation:
+    """Tests for input validation in make()."""
 
     def test_invalid_target_not_dict(self):
         """Test that non-dict target raises ValueError."""
         with pytest.raises(ValueError, match="target must be a dictionary"):
-            generate_dataset(columns={"age": "Age of person"}, num_rows=10, target="invalid")
+            make(columns={"age": "Age of person"}, num_rows=10, target="invalid")
 
     def test_invalid_target_missing_name(self):
         """Test that target without 'name' raises ValueError."""
         with pytest.raises(ValueError, match="target must have 'name' and 'prompt' keys"):
-            generate_dataset(
-                columns={"age": "Age of person"}, num_rows=10, target={"prompt": "Some prompt"}
-            )
+            make(columns={"age": "Age of person"}, num_rows=10, target={"prompt": "Some prompt"})
 
     def test_invalid_target_missing_prompt(self):
         """Test that target without 'prompt' raises ValueError."""
         with pytest.raises(ValueError, match="target must have 'name' and 'prompt' keys"):
-            generate_dataset(
-                columns={"age": "Age of person"}, num_rows=10, target={"name": "target_col"}
-            )
+            make(columns={"age": "Age of person"}, num_rows=10, target={"name": "target_col"})
 
     def test_invalid_output_extension(self, tmp_path):
         """Test that invalid file extension raises ValueError."""
@@ -39,25 +35,21 @@ class TestGenerateDatasetValidation:
             mock_llm_class.return_value = mock_llm
 
             with pytest.raises(ValueError, match="Cannot infer format"):
-                generate_dataset(
-                    columns={"age": "Age"}, num_rows=1, output_path=tmp_path / "data.txt"
-                )
+                make(columns={"age": "Age"}, num_rows=1, output_path=tmp_path / "data.txt")
 
     def test_invalid_quality_issues_not_list(self):
         """Test that non-list quality_issues raises ValueError."""
         with pytest.raises(ValueError, match="quality_issues must be a list"):
-            generate_dataset(columns={"age": "Age of person"}, num_rows=10, quality_issues="nulls")
+            make(columns={"age": "Age of person"}, num_rows=10, quality_issues="nulls")
 
     def test_invalid_quality_issues_unknown_value(self):
         """Test that unknown quality_issues value raises ValueError."""
         with pytest.raises(ValueError, match="Invalid quality_issues"):
-            generate_dataset(
-                columns={"age": "Age of person"}, num_rows=10, quality_issues=["invalid"]
-            )
+            make(columns={"age": "Age of person"}, num_rows=10, quality_issues=["invalid"])
 
 
-class TestGenerateDatasetWithMock:
-    """Tests for generate_dataset() with mocked LLM."""
+class TestMakeWithMock:
+    """Tests for make() with mocked LLM."""
 
     @pytest.fixture
     def mock_llm_response(self):
@@ -69,13 +61,13 @@ class TestGenerateDatasetWithMock:
         ]
 
     def test_returns_dataframe(self, mock_llm_response):
-        """Test that generate_dataset returns a DataFrame."""
+        """Test that make returns a DataFrame."""
         with patch("makeitup.core.generator.ChatOpenAI") as mock_llm_class:
             mock_llm = MagicMock()
             mock_llm.invoke.return_value.content = json.dumps(mock_llm_response)
             mock_llm_class.return_value = mock_llm
 
-            df = generate_dataset(columns={"age": "Age", "salary": "Salary"}, num_rows=3)
+            df = make(columns={"age": "Age", "salary": "Salary"}, num_rows=3)
 
             assert isinstance(df, pd.DataFrame)
             assert len(df) == 3
@@ -95,7 +87,7 @@ class TestGenerateDatasetWithMock:
             mock_llm.invoke.return_value.content = json.dumps(response_with_target)
             mock_llm_class.return_value = mock_llm
 
-            df = generate_dataset(
+            df = make(
                 columns={"age": "Age", "salary": "Salary"},
                 target={"name": "will_leave", "prompt": "Will leave company"},
                 num_rows=3,
@@ -111,9 +103,7 @@ class TestGenerateDatasetWithMock:
             mock_llm_class.return_value = mock_llm
 
             output_file = tmp_path / "test.csv"
-            generate_dataset(
-                columns={"age": "Age", "salary": "Salary"}, num_rows=3, output_path=output_file
-            )
+            make(columns={"age": "Age", "salary": "Salary"}, num_rows=3, output_path=output_file)
 
             assert output_file.exists()
             loaded = pd.read_csv(output_file)
@@ -132,7 +122,7 @@ class TestGenerateDatasetWithMock:
             mock_llm.invoke.return_value.content = json.dumps(response_with_nulls)
             mock_llm_class.return_value = mock_llm
 
-            df = generate_dataset(
+            df = make(
                 columns={"name": "Person name", "age": "Age", "salary": "Salary"},
                 num_rows=3,
                 quality_issues=["nulls"],
@@ -148,10 +138,10 @@ class TestGenerateDatasetWithMock:
 class TestExports:
     """Tests for package exports."""
 
-    def test_generate_dataset_is_exported(self):
-        from makeitup import generate_dataset as gen
+    def test_make_is_exported(self):
+        from makeitup import make as m
 
-        assert callable(gen)
+        assert callable(m)
 
     def test_write_dataframe_is_exported(self):
         from makeitup import write_dataframe as wdf
@@ -205,7 +195,7 @@ class TestIntegration:
 
     def test_generate_basic(self):
         """Test basic generation with real LLM."""
-        df = generate_dataset(
+        df = make(
             columns={
                 "name": "Person's full name",
                 "age": "Age between 20 and 60",
@@ -220,7 +210,7 @@ class TestIntegration:
 
     def test_generate_with_target(self):
         """Test generation with target column."""
-        df = generate_dataset(
+        df = make(
             columns={
                 "tenure_months": "Months as customer, 1-60",
                 "monthly_spend": "Monthly spending in USD, 10-500",
@@ -235,7 +225,7 @@ class TestIntegration:
 
     def test_generate_with_quality_issues(self):
         """Test generation with data quality degradation (nulls, outliers)."""
-        df = generate_dataset(
+        df = make(
             columns={
                 "name": "Person's full name",
                 "age": "Age between 20 and 60",
