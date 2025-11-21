@@ -6,7 +6,7 @@ from typing import Any
 
 from langchain_openai import ChatOpenAI
 
-from data_generation import config
+from makeitup import config
 
 logger = logging.getLogger(__name__)
 

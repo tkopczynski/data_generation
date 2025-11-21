@@ -5,7 +5,7 @@ import json
 import pandas as pd
 import pytest
 
-from data_generation.core.output_formats import (
+from makeitup.core.output_formats import (
     SUPPORTED_FORMATS,
     adjust_file_extension,
     detect_format_from_filename,

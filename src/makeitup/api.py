@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from data_generation.core.generator import generate_dataset_with_llm
-from data_generation.core.output_formats import detect_format_from_filename, write_dataframe
+from makeitup.core.generator import generate_dataset_with_llm
+from makeitup.core.output_formats import detect_format_from_filename, write_dataframe
 
 logger = logging.getLogger(__name__)
 

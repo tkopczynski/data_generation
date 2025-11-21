@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from data_generation import generate_dataset, write_dataframe
+from makeitup import generate_dataset, write_dataframe
 
 
 class TestGenerateDatasetValidation:
@@ -33,7 +33,7 @@ class TestGenerateDatasetValidation:
 
     def test_invalid_output_extension(self, tmp_path):
         """Test that invalid file extension raises ValueError."""
-        with patch("data_generation.core.generator.ChatOpenAI") as mock_llm_class:
+        with patch("makeitup.core.generator.ChatOpenAI") as mock_llm_class:
             mock_llm = MagicMock()
             mock_llm.invoke.return_value.content = '[{"age": 30}]'
             mock_llm_class.return_value = mock_llm
@@ -70,7 +70,7 @@ class TestGenerateDatasetWithMock:
 
     def test_returns_dataframe(self, mock_llm_response):
         """Test that generate_dataset returns a DataFrame."""
-        with patch("data_generation.core.generator.ChatOpenAI") as mock_llm_class:
+        with patch("makeitup.core.generator.ChatOpenAI") as mock_llm_class:
             mock_llm = MagicMock()
             mock_llm.invoke.return_value.content = json.dumps(mock_llm_response)
             mock_llm_class.return_value = mock_llm
@@ -90,7 +90,7 @@ class TestGenerateDatasetWithMock:
             {"age": 45, "salary": 120000, "will_leave": False},
         ]
 
-        with patch("data_generation.core.generator.ChatOpenAI") as mock_llm_class:
+        with patch("makeitup.core.generator.ChatOpenAI") as mock_llm_class:
             mock_llm = MagicMock()
             mock_llm.invoke.return_value.content = json.dumps(response_with_target)
             mock_llm_class.return_value = mock_llm
@@ -105,7 +105,7 @@ class TestGenerateDatasetWithMock:
 
     def test_saves_to_file(self, mock_llm_response, tmp_path):
         """Test that output_path saves the file."""
-        with patch("data_generation.core.generator.ChatOpenAI") as mock_llm_class:
+        with patch("makeitup.core.generator.ChatOpenAI") as mock_llm_class:
             mock_llm = MagicMock()
             mock_llm.invoke.return_value.content = json.dumps(mock_llm_response)
             mock_llm_class.return_value = mock_llm
@@ -127,7 +127,7 @@ class TestGenerateDatasetWithMock:
             {"name": "Jane Doe", "age": None, "salary": 120000},
         ]
 
-        with patch("data_generation.core.generator.ChatOpenAI") as mock_llm_class:
+        with patch("makeitup.core.generator.ChatOpenAI") as mock_llm_class:
             mock_llm = MagicMock()
             mock_llm.invoke.return_value.content = json.dumps(response_with_nulls)
             mock_llm_class.return_value = mock_llm
@@ -149,17 +149,17 @@ class TestExports:
     """Tests for package exports."""
 
     def test_generate_dataset_is_exported(self):
-        from data_generation import generate_dataset as gen
+        from makeitup import generate_dataset as gen
 
         assert callable(gen)
 
     def test_write_dataframe_is_exported(self):
-        from data_generation import write_dataframe as wdf
+        from makeitup import write_dataframe as wdf
 
         assert callable(wdf)
 
     def test_supported_formats_is_exported(self):
-        from data_generation import SUPPORTED_FORMATS
+        from makeitup import SUPPORTED_FORMATS
 
         assert isinstance(SUPPORTED_FORMATS, list)
         assert "csv" in SUPPORTED_FORMATS

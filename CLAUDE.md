@@ -30,8 +30,8 @@ DataFrame / File Output (CSV/JSON/Parquet/Excel)
 ## Project Structure
 
 ```
-data_generation/
-├── src/data_generation/     # Main package
+makeitup/
+├── src/makeitup/            # Main package
 │   ├── __init__.py          # Package exports
 │   ├── api.py               # Public API: generate_dataset()
 │   ├── config.py            # LLM configuration
@@ -68,7 +68,7 @@ data_generation/
 ### Basic Generation
 
 ```python
-from data_generation import generate_dataset
+from makeitup import generate_dataset
 
 df = generate_dataset(
     columns={
@@ -123,7 +123,7 @@ df = generate_dataset(
 
 ## Configuration
 
-Settings in `src/data_generation/config.py`:
+Settings in `src/makeitup/config.py`:
 
 ```python
 LLM_MODEL = "gpt-4o-mini"           # Model for generation

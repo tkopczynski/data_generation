@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "data-generation"
+name = "makeitup"
 version = "0.1.0"
 description = "LLM-based synthetic dataset generation"
 readme = "README.md"
@@ -45,7 +45,7 @@ select = [
 ignore = []
 
 [tool.ruff.lint.isort]
-known-first-party = ["data_generation"]
+known-first-party = ["makeitup"]
 
 [tool.pytest.ini_options]
 markers = [
