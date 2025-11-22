@@ -31,6 +31,16 @@ export OPENAI_API_KEY=your-api-key
 
 Or create a `.env` file in your project with `OPENAI_API_KEY=your-api-key`.
 
+### Using a Local Model
+
+You can use locally deployed models (Ollama, vLLM, LMStudio, etc.) by setting the base URL:
+
+```bash
+export LLM_BASE_URL=http://localhost:11434/v1
+export LLM_MODEL=llama3
+export LLM_API_KEY=not-needed  # Required by some local servers
+```
+
 ## Examples
 
 ### Basic Data
