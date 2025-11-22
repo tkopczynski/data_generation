@@ -123,7 +123,7 @@ df = make(
 ## Requirements
 
 - Python >= 3.12
-- OpenAI API key
+- OpenAI API key or a local model (Ollama, vLLM, etc.)
 
 ## Documentation
 
