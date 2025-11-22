@@ -2,7 +2,7 @@
 
 [![PyPI version](https://badge.fury.io/py/makeitup.svg)](https://pypi.org/project/makeitup/)
 
-Generate synthetic datasets using LLM. Describe your columns in plain English and get realistic data back.
+Generate synthetic datasets for ML training using LLM. Describe your columns in plain English and get realistic data back.
 
 ```python
 from makeitup import make
@@ -16,6 +16,14 @@ df = make(
     num_rows=100
 )
 ```
+
+## Features
+
+- **Plain English columns** - Describe what you want, get realistic data back
+- **ML-ready datasets** - Add target columns for classification or regression
+- **Data quality testing** - Inject nulls, outliers, typos, or duplicates to test your pipelines
+- **Multiple formats** - Export to CSV, JSON, Parquet, or Excel
+- **Local model support** - Works with OpenAI, Ollama, vLLM, LMStudio, and any OpenAI-compatible API
 
 ## Installation
 
